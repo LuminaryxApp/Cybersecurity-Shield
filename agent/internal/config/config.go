@@ -1,6 +1,9 @@
 package config
 
-import "os"
+import (
+	"os"
+	"strings"
+)
 
 type Config struct {
 	AgentID           string
@@ -29,8 +32,24 @@ func Load() *Config {
 		EnableNetwork:     getEnv("ENABLE_NETWORK", "true") == "true",
 		EnableCloud:       getEnv("ENABLE_CLOUD", "false") == "true",
 		CloudProvider:     getEnv("CLOUD_PROVIDER", ""),
+		LogSources:        parseList(getEnv("LOG_SOURCES", "")),
 		NetworkInterface:  getEnv("NETWORK_INTERFACE", ""),
 	}
+}
+
+func parseList(val string) []string {
+	if val == "" {
+		return nil
+	}
+	parts := strings.Split(val, ",")
+	result := make([]string, 0, len(parts))
+	for _, p := range parts {
+		p = strings.TrimSpace(p)
+		if p != "" {
+			result = append(result, p)
+		}
+	}
+	return result
 }
 
 func getEnv(key, fallback string) string {

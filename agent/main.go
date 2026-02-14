@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/LuminaryxApp/Cybersecurity-Shield/agent/internal/collectors/logs"
 	"github.com/LuminaryxApp/Cybersecurity-Shield/agent/internal/config"
 	"github.com/LuminaryxApp/Cybersecurity-Shield/agent/internal/core"
 	"github.com/nats-io/nats.go"
@@ -30,6 +31,12 @@ func main() {
 	defer nc.Close()
 
 	agent := core.New(cfg.AgentID, cfg.OrgID, cfg.APIURL, nc, cfg.HeartbeatInterval)
+
+	if cfg.EnableLogs {
+		logCollector := logs.NewLogCollector(cfg.LogSources, "")
+		agent.Register(logCollector)
+		log.Println("registered log collector")
+	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
