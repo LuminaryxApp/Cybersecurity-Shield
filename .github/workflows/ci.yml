@@ -1,0 +1,99 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  go-test:
+    name: Go Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Test API Service
+        run: go test ./services/api/... -timeout 60s -race -v
+
+      - name: Test Engine Service
+        run: go test ./services/engine/... -timeout 60s -race -v
+
+      - name: Test Agent (fast tests)
+        run: |
+          go test ./agent/internal/collectors/logs/... -timeout 60s -race -v
+          go test ./agent/internal/ml/... -timeout 60s -race -v
+          go test ./agent/internal/collectors/cloud/... -timeout 60s -v
+
+  go-build:
+    name: Go Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Build API
+        run: go build ./services/api/...
+
+      - name: Build Engine
+        run: go build ./services/engine/...
+
+      - name: Build Agent
+        run: go build ./agent/...
+
+  dashboard:
+    name: Dashboard Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: dashboard
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: dashboard/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+  docker:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    needs: [go-test, go-build, dashboard]
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build API Image
+        run: docker build -t cybershield-api -f services/api/Dockerfile .
+
+      - name: Build Engine Image
+        run: docker build -t cybershield-engine -f services/engine/Dockerfile .
+
+      - name: Build Agent Image
+        run: docker build -t cybershield-agent -f agent/Dockerfile .
+
+      - name: Build Dashboard Image
+        run: docker build -t cybershield-dashboard -f dashboard/Dockerfile .
