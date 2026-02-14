@@ -14,12 +14,14 @@ import (
 type Server struct {
 	Router *chi.Mux
 	DB     *pgxpool.Pool
+	WSHub  *handlers.WSHub
 }
 
 func New(db *pgxpool.Pool) *Server {
 	s := &Server{
 		Router: chi.NewRouter(),
 		DB:     db,
+		WSHub:  handlers.NewWSHub(),
 	}
 
 	s.Router.Use(middleware.Logger)
@@ -68,6 +70,8 @@ func (s *Server) mountRoutes() {
 		r.Route("/threats", func(r chi.Router) {})
 		r.Route("/settings", func(r chi.Router) {})
 	})
+
+	s.Router.Get("/ws", s.WSHub.HandleWS)
 }
 
 func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
