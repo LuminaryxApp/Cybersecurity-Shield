@@ -1,0 +1,27 @@
+{
+  "realm": "cybershield",
+  "enabled": true,
+  "roles": {
+    "realm": [
+      { "name": "owner", "description": "Business owner role" },
+      { "name": "admin", "description": "IT administrator role" },
+      { "name": "viewer", "description": "Read-only viewer role" }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "shield-dashboard",
+      "enabled": true,
+      "publicClient": true,
+      "redirectUris": ["http://localhost:3000/*"],
+      "webOrigins": ["http://localhost:3000"],
+      "directAccessGrantsEnabled": true
+    },
+    {
+      "clientId": "shield-api",
+      "enabled": true,
+      "bearerOnly": true
+    }
+  ],
+  "defaultRoles": ["viewer"]
+}

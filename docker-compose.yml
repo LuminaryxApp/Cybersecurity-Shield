@@ -1,0 +1,72 @@
+services:
+  postgres:
+    image: timescale/timescaledb:latest-pg16
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  nats:
+    image: nats:2.10-alpine
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    command: ["--auth", "${NATS_TOKEN}", "-m", "8222"]
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0
+    environment:
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+    ports:
+      - "8180:8080"
+    command: start-dev --import-realm
+    volumes:
+      - ./keycloak:/opt/keycloak/data/import
+
+  api:
+    build:
+      context: .
+      dockerfile: services/api/Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - API_PORT=${API_PORT}
+      - API_DB_URL=${API_DB_URL}
+      - NATS_URL=${NATS_URL}
+      - NATS_TOKEN=${NATS_TOKEN}
+      - KEYCLOAK_URL=${KEYCLOAK_URL}
+    depends_on:
+      - postgres
+      - nats
+      - keycloak
+
+  engine:
+    build:
+      context: .
+      dockerfile: services/engine/Dockerfile
+    environment:
+      - API_DB_URL=${API_DB_URL}
+      - NATS_URL=${NATS_URL}
+      - NATS_TOKEN=${NATS_TOKEN}
+      - LLM_PROVIDER=${LLM_PROVIDER}
+      - LLM_API_KEY=${LLM_API_KEY}
+    depends_on:
+      - postgres
+      - nats
+
+  dashboard:
+    build:
+      context: ./dashboard
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
+
+volumes:
+  pgdata:
