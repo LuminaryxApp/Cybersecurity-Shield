@@ -7,6 +7,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/LuminaryxApp/Cybersecurity-Shield/services/api/internal/handlers"
 )
 
 type Server struct {
@@ -32,8 +34,13 @@ func New(db *pgxpool.Pool) *Server {
 }
 
 func (s *Server) mountRoutes() {
+	orgHandler := handlers.NewOrgHandler(s.DB)
+
 	s.Router.Route("/api/v1", func(r chi.Router) {
-		r.Route("/organizations", func(r chi.Router) {})
+		r.Route("/organizations", func(r chi.Router) {
+			r.Post("/", orgHandler.Create)
+			r.Get("/", orgHandler.List)
+		})
 		r.Route("/agents", func(r chi.Router) {})
 		r.Route("/alerts", func(r chi.Router) {})
 		r.Route("/threats", func(r chi.Router) {})
