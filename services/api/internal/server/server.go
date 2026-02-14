@@ -35,13 +35,20 @@ func New(db *pgxpool.Pool) *Server {
 
 func (s *Server) mountRoutes() {
 	orgHandler := handlers.NewOrgHandler(s.DB)
+	agentHandler := handlers.NewAgentHandler(s.DB)
 
 	s.Router.Route("/api/v1", func(r chi.Router) {
 		r.Route("/organizations", func(r chi.Router) {
 			r.Post("/", orgHandler.Create)
 			r.Get("/", orgHandler.List)
 		})
-		r.Route("/agents", func(r chi.Router) {})
+		r.Route("/agents", func(r chi.Router) {
+			r.Post("/", agentHandler.Create)
+			r.Get("/", agentHandler.List)
+			r.Get("/{id}", agentHandler.Get)
+			r.Patch("/{id}/heartbeat", agentHandler.Heartbeat)
+			r.Put("/{id}/config", agentHandler.UpdateConfig)
+		})
 		r.Route("/alerts", func(r chi.Router) {})
 		r.Route("/threats", func(r chi.Router) {})
 		r.Route("/metrics", func(r chi.Router) {})
