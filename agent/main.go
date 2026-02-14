@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	"github.com/LuminaryxApp/Cybersecurity-Shield/agent/internal/collectors/logs"
+	"github.com/LuminaryxApp/Cybersecurity-Shield/agent/internal/collectors/network"
 	"github.com/LuminaryxApp/Cybersecurity-Shield/agent/internal/config"
 	"github.com/LuminaryxApp/Cybersecurity-Shield/agent/internal/core"
 	"github.com/nats-io/nats.go"
@@ -36,6 +37,12 @@ func main() {
 		logCollector := logs.NewLogCollector(cfg.LogSources, "")
 		agent.Register(logCollector)
 		log.Println("registered log collector")
+	}
+
+	if cfg.EnableNetwork {
+		netCollector := network.NewNetworkCollector(cfg.NetworkInterface)
+		agent.Register(netCollector)
+		log.Println("registered network collector")
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
