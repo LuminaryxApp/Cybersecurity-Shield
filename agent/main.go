@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/LuminaryxApp/Cybersecurity-Shield/agent/internal/collectors/cloud"
 	"github.com/LuminaryxApp/Cybersecurity-Shield/agent/internal/collectors/logs"
 	"github.com/LuminaryxApp/Cybersecurity-Shield/agent/internal/collectors/network"
 	"github.com/LuminaryxApp/Cybersecurity-Shield/agent/internal/config"
@@ -43,6 +44,12 @@ func main() {
 		netCollector := network.NewNetworkCollector(cfg.NetworkInterface)
 		agent.Register(netCollector)
 		log.Println("registered network collector")
+	}
+
+	if cfg.EnableCloud {
+		cloudCollector := cloud.NewCloudCollector(cfg.CloudProvider, 0)
+		agent.Register(cloudCollector)
+		log.Println("registered cloud collector for " + cfg.CloudProvider)
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
