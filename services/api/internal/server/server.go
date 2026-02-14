@@ -37,6 +37,7 @@ func (s *Server) mountRoutes() {
 	orgHandler := handlers.NewOrgHandler(s.DB)
 	agentHandler := handlers.NewAgentHandler(s.DB)
 	alertHandler := handlers.NewAlertHandler(s.DB)
+	metricsHandler := handlers.NewMetricsHandler(s.DB)
 
 	s.Router.Route("/api/v1", func(r chi.Router) {
 		r.Route("/organizations", func(r chi.Router) {
@@ -56,8 +57,15 @@ func (s *Server) mountRoutes() {
 			r.Patch("/{id}", alertHandler.Update)
 			r.Post("/{id}/escalate", alertHandler.Escalate)
 		})
+		r.Route("/metrics", func(r chi.Router) {
+			r.Get("/", metricsHandler.QueryMetrics)
+			r.Get("/threat-score", metricsHandler.GetThreatScore)
+		})
+		r.Route("/events", func(r chi.Router) {
+			r.Post("/", metricsHandler.IngestEvents)
+			r.Get("/", metricsHandler.ListEvents)
+		})
 		r.Route("/threats", func(r chi.Router) {})
-		r.Route("/metrics", func(r chi.Router) {})
 		r.Route("/settings", func(r chi.Router) {})
 	})
 }
